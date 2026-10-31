@@ -1,0 +1,40 @@
+alias: Discord - Voice Channel Notifications
+description: >
+  Skickar Pushover när Discords röstkanal blir aktiv eller när sista personen
+  lämnar.
+triggers:
+  - trigger: state
+    entity_id: sensor.discord_voice_members
+    to: null
+conditions: []
+actions:
+  - choose:
+      - conditions:
+          - condition: template
+            value_template: |
+              {{ trigger.from_state is not none
+                 and trigger.to_state is not none
+                 and (trigger.from_state.state | int(-1)) == 0
+                 and (trigger.to_state.state | int(-1)) > 0 }}
+        sequence:
+          - action: notify.ulf_pushover
+            data:
+              title: Discord Voice
+              message: >
+                🎮 Någon har anslutit till Discord! Det är nu {{
+                trigger.to_state.state }} personer i röstkanalen.
+      - conditions:
+          - condition: template
+            value_template: |
+              {{ trigger.from_state is not none
+                 and trigger.to_state is not none
+                 and (trigger.from_state.state | int(-1)) > 0
+                 and (trigger.to_state.state | int(-1)) == 0 }}
+        sequence:
+          - action: notify.ulf_pushover
+            data:
+              title: Discord Voice
+              message: |
+                🔇 Alla har lämnat Discord. Röstkanalen är nu tom.
+mode: queued
+max: 10
